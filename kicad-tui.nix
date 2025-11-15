@@ -58,7 +58,7 @@ let
         mkdir -p "$project_path"/{hardware,libraries,documentation,output}
         mkdir -p "$project_path/libraries"/{symbols,footprints,3dmodels}
         
-        cat > "$project_path/hardware/$name.kicad_pro" <<EOF
+        cat > "$project_path/hardware/$name.kicad_pro" <<'EOF'
       {
         "board": {
           "design_settings": {
@@ -84,11 +84,12 @@ let
           "pinned_symbol_libs": []
         },
         "meta": {
-          "filename": "$name.kicad_pro",
+          "filename": "PROJECT_NAME.kicad_pro",
           "version": 1
         }
       }
       EOF
+        sed -i "s/PROJECT_NAME/$name/g" "$project_path/hardware/$name.kicad_pro"
         
         cat > "$project_path/hardware/$name.kicad_sch" <<EOF
       (kicad_sch (version 20230121) (generator eeschema)
@@ -99,7 +100,7 @@ let
       )
       EOF
         
-        cat > "$project_path/hardware/$name.kicad_pcb" <<EOF
+        cat > "$project_path/hardware/$name.kicad_pcb" <<'EOF'
       (kicad_pcb (version 20221018) (generator pcbnew)
         (general
           (thickness 1.6)
@@ -138,6 +139,7 @@ let
       }
       
       open_project() {
+        # shellcheck disable=SC2016
         project_file=$(find "$PROJECT_DIR" -name "*.kicad_pro" 2>/dev/null | fzf --preview 'tree -L 2 $(dirname {})' || true)
         
         if [ -n "$project_file" ]; then
@@ -322,7 +324,8 @@ let
       
       export_gerbers() {
         local pcb_file="$KICAD_CURRENT_PROJECT.kicad_pcb"
-        local output_dir="$(dirname "$KICAD_CURRENT_PROJECT")/output/gerbers"
+        local output_dir
+        output_dir="$(dirname "$KICAD_CURRENT_PROJECT")/output/gerbers"
         
         mkdir -p "$output_dir"
         
@@ -336,9 +339,13 @@ let
       
       export_complete_fab() {
         local pcb_file="$KICAD_CURRENT_PROJECT.kicad_pcb"
-        local project_name=$(basename "$KICAD_CURRENT_PROJECT")
-        local output_base="$(dirname "$KICAD_CURRENT_PROJECT")/output"
-        local fab_dir="$output_base/fab_package_$(date +%Y%m%d_%H%M%S)"
+        local project_name
+        local output_base
+        local fab_dir
+        
+        project_name=$(basename "$KICAD_CURRENT_PROJECT")
+        output_base="$(dirname "$KICAD_CURRENT_PROJECT")/output"
+        fab_dir="$output_base/fab_package_$(date +%Y%m%d_%H%M%S)"
         
         mkdir -p "$fab_dir"/{gerbers,assembly,3d}
         
@@ -386,8 +393,13 @@ let
       }
       
       show_project_status() {
-        local project_name=$(basename "$KICAD_CURRENT_PROJECT")
-        local project_dir=$(dirname "$KICAD_CURRENT_PROJECT")
+        local project_name
+        local project_dir
+        local file_count
+        
+        project_name=$(basename "$KICAD_CURRENT_PROJECT")
+        project_dir=$(dirname "$KICAD_CURRENT_PROJECT")
+        file_count=$(find "$project_dir" -maxdepth 1 -name "$(basename "$KICAD_CURRENT_PROJECT").*" -type f | wc -l)
         
         gum style \
           --foreground 212 \
@@ -402,7 +414,7 @@ let
           "Location: $project_dir" \
           "" \
           "Files:" \
-          "$(ls -la "$KICAD_CURRENT_PROJECT".* 2>/dev/null | wc -l) project files" \
+          "$file_count project files" \
           "" \
           "$(tree -L 2 "$project_dir" 2>/dev/null | tail -n 1)"
         
