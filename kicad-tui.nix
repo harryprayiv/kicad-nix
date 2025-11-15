@@ -1,4 +1,4 @@
-{ pkgs, lib }:
+{ pkgs }:
 
 let
   kicadTui = pkgs.writeShellApplication {
@@ -6,7 +6,6 @@ let
     runtimeInputs = with pkgs; [
       kicad
       dialog
-      whiptail
       jq
       ncurses
       gum
