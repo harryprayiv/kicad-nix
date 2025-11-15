@@ -14,9 +14,6 @@
         # Import the TUI module if you want it
         kicadTools = import ./kicad-tui.nix { inherit pkgs; };
         
-        # Your custom libraries
-        customLibraries = ./libraries;
-        
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
@@ -43,25 +40,26 @@
             echo "  kicad-batch  - Batch processing tool (if enabled)"
             
             export KICAD_PROJECT_DIR="$(pwd)"
-            export KICAD9_SYMBOL_DIR="$(pwd)/libraries/symbols"
-            export KICAD9_FOOTPRINT_DIR="$(pwd)/libraries/footprints"
-            export KICAD9_3DMODEL_DIR="$(pwd)/libraries/3dmodels"
             
+            # Point to KiCad 9's SYSTEM libraries using passthru
+            export KICAD9_SYMBOL_DIR="${pkgs.kicad.libraries.symbols}/share/kicad/symbols"
+            export KICAD9_FOOTPRINT_DIR="${pkgs.kicad.libraries.footprints}/share/kicad/footprints"
+            export KICAD9_3DMODEL_DIR="${pkgs.kicad.libraries.packages3d}/share/kicad/3dmodels"
+            export KICAD9_TEMPLATE_DIR="${pkgs.kicad.libraries.templates}/share/kicad/template"
+            
+            # User libraries for YOUR custom symbols/footprints
+            export KICAD_USER_SYMBOL_DIR="$(pwd)/libraries/symbols"
+            export KICAD_USER_FOOTPRINT_DIR="$(pwd)/libraries/footprints"
+            export KICAD_USER_3DMODEL_DIR="$(pwd)/libraries/3dmodels"
+            
+            # Create directories for user libraries only
             mkdir -p libraries/{symbols,footprints,3dmodels}
             mkdir -p projects
-          '';
-        };
-        
-        # Minimal shell without TUI
-        devShells.minimal = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            kicad
-            git
-          ];
-          
-          shellHook = ''
-            echo "KiCad Minimal Environment"
-            export KICAD_PROJECT_DIR="$(pwd)"
+            
+            echo ""
+            echo "System symbol libraries: ${pkgs.kicad.libraries.symbols}/share/kicad/symbols"
+            echo "System footprint libraries: ${pkgs.kicad.libraries.footprints}/share/kicad/footprints"
+            echo "User libraries: $(pwd)/libraries/"
           '';
         };
       });
